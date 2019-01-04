@@ -47,29 +47,3 @@ func (batch *Batch) Quantity() uint32 {
 func (batch *Batch) CreatedAt() types.UnixTimestamp {
 	return batch.createdAt
 }
-
-const (
-	SELLING_ORDER_STARTED uint16 = iota
-	SELLING_ORDER_CANCELED
-	SELLING_ORDER_CONCLUDED
-)
-
-type SellingOrder struct {
-	id        types.ID
-	product   *Product
-	price     *types.Money
-	quantity  uint32
-	status    uint16
-	createdAt types.UnixTimestamp
-}
-
-func NewSellingOrder(id types.ID, product *Product, price *types.Money, quantity uint32, status uint16, createdAt types.UnixTimestamp) *SellingOrder {
-	return &SellingOrder{
-		id:        id,
-		product:   product,
-		price:     price,
-		quantity:  quantity,
-		status:    status,
-		createdAt: createdAt,
-	}
-}

@@ -11,8 +11,7 @@ import (
 
 var (
 	ErrProductNotFound = errors.New("Product not found.")
-
-	IDTable = make(map[int]types.ID)
+	IDTable            = make(map[int]types.ID)
 )
 
 type productRepositoryMock struct {
