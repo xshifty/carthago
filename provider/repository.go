@@ -1,29 +1,21 @@
 package provider
 
-import (
-	"errors"
-)
-
-type RepositoryContainer map[string]interface{}
-
-var (
-	ErrContainerKeyNotFound = errors.New("Container key not found.")
-)
+import "fmt"
 
 type repositoryFactoryHandler struct {
-	container RepositoryContainer
+	container *Container
 }
 
-func NewRepositoryFactory(container RepositoryContainer) *repositoryFactoryHandler {
+func NewRepositoryFactory(container *Container) *repositoryFactoryHandler {
 	return &repositoryFactoryHandler{
 		container: container,
 	}
 }
 
-func (factory *repositoryFactoryHandler) Get(key string) (interface{}, error) {
-	repository, err := factory.container[key]
-	if !err {
-		return nil, ErrContainerKeyNotFound
+func (factory *repositoryFactoryHandler) Get(repositoryName string) (interface{}, error) {
+	repository, err := factory.container.Get(fmt.Sprintf("repository:%s", repositoryName))
+	if err != nil {
+		return nil, err
 	}
 
 	return repository, nil

@@ -1,16 +1,20 @@
 package model
 
-type AcquiredBatch struct {
-	id        ID
+import (
+	types "github.com/xshifty/carthago/types"
+)
+
+type Batch struct {
+	id        types.ID
 	supplier  *Supplier
 	product   *Product
-	cost      *Money
+	cost      *types.Money
 	quantity  uint32
-	createdAt UnixTimestamp
+	createdAt types.UnixTimestamp
 }
 
-func NewAcquiredBatch(id ID, supplier *Supplier, product *Product, cost *Money, quantity uint32, createdAt UnixTimestamp) *AcquiredBatch {
-	return &AcquiredBatch{
+func NewBatch(id types.ID, supplier *Supplier, product *Product, cost *types.Money, quantity uint32, createdAt types.UnixTimestamp) *Batch {
+	return &Batch{
 		id:        id,
 		supplier:  supplier,
 		product:   product,
@@ -20,48 +24,46 @@ func NewAcquiredBatch(id ID, supplier *Supplier, product *Product, cost *Money, 
 	}
 }
 
-func (batch *AcquiredBatch) ID() ID {
+func (batch *Batch) ID() types.ID {
 	return batch.id
 }
 
-func (batch *AcquiredBatch) Supplier() *Supplier {
+func (batch *Batch) Supplier() *Supplier {
 	return batch.supplier
 }
 
-func (batch *AcquiredBatch) Product() *Product {
+func (batch *Batch) Product() *Product {
 	return batch.product
 }
 
-func (batch *AcquiredBatch) Cost() *Money {
+func (batch *Batch) Cost() *types.Money {
 	return batch.cost
 }
 
-func (batch *AcquiredBatch) Quantity() uint32 {
+func (batch *Batch) Quantity() uint32 {
 	return batch.quantity
 }
 
-func (batch *AcquiredBatch) CreatedAt() UnixTimestamp {
+func (batch *Batch) CreatedAt() types.UnixTimestamp {
 	return batch.createdAt
 }
 
-type SellingOrderStatus uint16
-
 const (
-	SELLING_ORDER_STARTED SellingOrderStatus = iota
+	SELLING_ORDER_STARTED uint16 = iota
 	SELLING_ORDER_CANCELED
 	SELLING_ORDER_CONCLUDED
 )
 
 type SellingOrder struct {
-	id        ID
+	id        types.ID
 	product   *Product
-	price     *Money
+	price     *types.Money
 	quantity  uint32
-	status    SellingOrderStatus
-	createdAt UnixTimestamp
+	status    uint16
+	createdAt types.UnixTimestamp
 }
 
-func NewSellingOrder(id ID, product *Product, price *Money, quantity uint32, status SellingOrderStatus, createdAt UnixTimestamp) *SellingOrder {
+func NewSellingOrder(id types.ID, product *Product, price *types.Money, quantity uint32, status uint16, createdAt types.UnixTimestamp) *SellingOrder {
 	return &SellingOrder{
 		id:        id,
 		product:   product,

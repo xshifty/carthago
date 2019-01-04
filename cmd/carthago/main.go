@@ -1,85 +1,60 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
-	"sync"
 
+	mock "github.com/xshifty/carthago/mock"
 	model "github.com/xshifty/carthago/model"
 	provider "github.com/xshifty/carthago/provider"
+	types "github.com/xshifty/carthago/types"
 )
 
 var (
 	info = log.New(os.Stdout, "[ INFO ] ", log.LstdFlags)
 	warn = log.New(os.Stderr, "[ WARN ] ", log.LstdFlags)
+
+	container         = provider.NewContainer()
+	repositoryFactory = provider.NewRepositoryFactory(container)
 )
 
-var mux = &sync.Mutex{}
-
-type productRepositoryMock struct {
-	data map[model.ID]map[string]interface{}
-}
-
-func NewProductRepositoryMock() *productRepositoryMock {
-	productRepo := productRepositoryMock{make(map[model.ID]map[string]interface{})}
-	for i := 1; i <= 30; i = i + 1 {
-		mux.Lock()
-		productRepo.data[model.ID(fmt.Sprintf("%04d", i))] = map[string]interface{}{
-			"description": fmt.Sprintf("Mock Product #%d", i),
-		}
-		mux.Unlock()
+type (
+	ProductRepository interface {
+		FindAll() model.ProductList
+		FindByID(id types.ID) (*model.Product, error)
 	}
-
-	return &productRepo
-}
-
-func (repo *productRepositoryMock) FindAll() model.ProductList {
-	productList := model.ProductList{}
-
-	for id, detail := range repo.data {
-		product := model.NewProduct(id, detail["description"].(string))
-		productList = append(productList, product)
-	}
-
-	return productList
-}
-
-func (repo *productRepositoryMock) FindByID(id model.ID) (*model.Product, error) {
-	detail, err := repo.data[id]
-	if !err {
-		return nil, model.ErrProductNotFound
-	}
-
-	return model.NewProduct(id, detail["description"].(string)), nil
-}
-
-var repositoryFactory = provider.NewRepositoryFactory(provider.RepositoryContainer{
-	"productRepository": NewProductRepositoryMock(),
-})
+)
 
 func main() {
-	info.Println("Welcome to Carthago")
+	container.Add("repository:Product", func(container *provider.Container) interface{} {
+		return mock.NewProductRepository()
+	})
 
-	repo, err := repositoryFactory.Get("productRepository")
+	info.Println("| Welcome to Carthago")
+
+	repo, err := repositoryFactory.Get("Product")
 	if err != nil {
 		warn.Panicln(err)
 	}
-	productRepository := repo.(*productRepositoryMock)
+	productRepository := repo.(ProductRepository)
 
+	info.Println("| Printing all products")
 	for _, product := range productRepository.FindAll() {
-		info.Printf("ID: %v (%s)", product.ID(), product.Description())
+		info.Printf("| ID: %v (%s)", product.ID(), product.Description())
 	}
 
-	prod, err := productRepository.FindByID(model.ID("0003"))
+	info.Printf("| Fetching data for product ID: %s", mock.IDTable[3])
+	prod, err := productRepository.FindByID(mock.IDTable[3])
 	if err != nil {
 		warn.Panicln(err)
 	}
+	info.Printf("| ID: %s (%s)\n", prod.ID(), prod.Description())
 
-	info.Printf("%s (%s)\n", prod.ID(), prod.Description())
-
-	prod, err = productRepository.FindByID(model.ID("1000"))
+	invalidID := types.ID("b169e9b0-e6c8-52c2-9985-8aeb8eb18f03")
+	info.Printf("| Fetching data for product ID: %s", invalidID)
+	prod, err = productRepository.FindByID(invalidID)
 	if err != nil {
-		warn.Fatalln(err)
+		warn.Fatalf("| %s", err)
 	}
+	info.Printf("| ID: %s (%s)\n", prod.ID(), prod.Description())
 }

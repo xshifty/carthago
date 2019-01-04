@@ -1,18 +1,22 @@
 package model
 
+import (
+	types "github.com/xshifty/carthago/types"
+)
+
 type Supplier struct {
-	id   ID
+	id   types.ID
 	name string
 }
 
-func NewSupplier(id ID, name string) *Supplier {
+func NewSupplier(id types.ID, name string) *Supplier {
 	return &Supplier{
 		id:   id,
 		name: name,
 	}
 }
 
-func (supplier *Supplier) ID() ID {
+func (supplier *Supplier) ID() types.ID {
 	return supplier.id
 }
 
