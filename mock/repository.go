@@ -2,8 +2,6 @@ package mock
 
 import (
 	"errors"
-	"fmt"
-	"time"
 
 	"database/sql"
 
@@ -13,70 +11,59 @@ import (
 	types "github.com/xshifty/carthago/types"
 )
 
-var (
-	ErrProductNotFound = errors.New("Product not found.")
-	IDTable            = make(map[int]types.ID)
-)
+var ErrProductNotFound = errors.New("Product not found.")
 
 type productRepositoryMock struct {
-	//data     map[types.ID]map[string]interface{}
 	db       *sql.DB
 	listener *pq.Listener
 }
 
-func NewProductRepository() *productRepositoryMock {
-	db, err := sql.Open("postgres", "user=postgres host=localhost sslmode=disable")
-	if err != nil {
-		panic(err)
-	}
-
+func NewProductRepository(db *sql.DB, listener *pq.Listener) *productRepositoryMock {
 	productRepo := productRepositoryMock{
-		db: db,
-		listener: pq.NewListener("", 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-		}),
+		db:       db,
+		listener: listener,
 	}
 
 	return &productRepo
 }
 
 func (repo *productRepositoryMock) FindAll() model.ProductList {
-	rows, err := repo.db.Query("SELECT id, description, metadata FROM carthago.product")
+	rows, err := repo.db.Query("SELECT id, description FROM carthago.product")
 	if err != nil {
 		panic(err)
 	}
 
 	var (
 		productList model.ProductList
-		id          sql.NullString
-		description sql.NullString
-		metadata    sql.NullString
+		id          string
+		description string
 	)
 
 	for {
 		ok := rows.Next()
-
 		if !ok {
 			break
 		}
 
-		rows.Scan(&id, &description, &metadata)
-		fmt.Println(id, description, metadata)
+		rows.Scan(&id, &description)
+		productList = model.ProductList(append(productList, model.NewProduct(types.ID(id), description)))
 	}
 
 	return productList
 }
 
 func (repo *productRepositoryMock) FindByID(id types.ID) (*model.Product, error) {
-	/*
-		detail, err := repo.data[id]
-		if !err {
-			return nil, ErrProductNotFound
-		}
-	*/
+	rows, err := repo.db.Query("SELECT id, description FROM carthago.product WHERE id = $1", id)
+	if err != nil {
+		return nil, err
+	}
 
-	//return model.NewProduct(id, detail["description"].(string)), nil
-	return model.NewProduct(id, "hello world"), nil
+	var description string
+
+	if rows.Next() {
+		rows.Scan(&id, &description)
+		return model.NewProduct(id, description), nil
+	}
+
+	return nil, errors.New("No data found.")
 }

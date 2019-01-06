@@ -1,9 +1,13 @@
 package main
 
 import (
+	"database/sql"
+	"fmt"
 	"log"
 	"os"
+	"time"
 
+	"github.com/lib/pq"
 	mock "github.com/xshifty/carthago/mock"
 	model "github.com/xshifty/carthago/model"
 	provider "github.com/xshifty/carthago/provider"
@@ -26,8 +30,36 @@ type (
 )
 
 func main() {
+	container.Add("db:conn", func(container *provider.Container) interface{} {
+		conn, err := sql.Open("postgres", "user=postgres host=localhost sslmode=disable")
+		if err != nil {
+			panic(err)
+		}
+		return conn
+	})
+
+	container.Add("db:listener", func(container *provider.Container) interface{} {
+		return pq.NewListener("", 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		})
+	})
+
 	container.Add("repository:Product", func(container *provider.Container) interface{} {
-		return mock.NewProductRepository()
+		conn, err := container.Get("db:conn")
+		if err != nil {
+			panic(err)
+		}
+
+		listener, err := container.Get("db:listener")
+		if err != nil {
+			panic(err)
+		}
+
+		return mock.NewProductRepository(
+			conn.(*sql.DB),
+			listener.(*pq.Listener))
 	})
 
 	info.Println("| Welcome to Carthago")
@@ -42,19 +74,4 @@ func main() {
 	for _, product := range productRepository.FindAll() {
 		info.Printf("| ID: %v (%s)", product.ID(), product.Description())
 	}
-
-	info.Printf("| Fetching data for product ID: %s", mock.IDTable[3])
-	prod, err := productRepository.FindByID(mock.IDTable[3])
-	if err != nil {
-		warn.Panicln(err)
-	}
-	info.Printf("| ID: %s (%s)\n", prod.ID(), prod.Description())
-
-	invalidID := types.ID("b169e9b0-e6c8-52c2-9985-8aeb8eb18f03")
-	info.Printf("| Fetching data for product ID: %s", invalidID)
-	prod, err = productRepository.FindByID(invalidID)
-	if err != nil {
-		warn.Fatalf("| %s", err)
-	}
-	info.Printf("| ID: %s (%s)\n", prod.ID(), prod.Description())
 }
