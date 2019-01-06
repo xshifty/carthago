@@ -3,8 +3,12 @@ package mock
 import (
 	"errors"
 	"fmt"
+	"time"
 
-	uuid "github.com/satori/go.uuid"
+	"database/sql"
+
+	"github.com/lib/pq"
+
 	model "github.com/xshifty/carthago/model"
 	types "github.com/xshifty/carthago/types"
 )
@@ -15,37 +19,64 @@ var (
 )
 
 type productRepositoryMock struct {
-	data map[types.ID]map[string]interface{}
+	//data     map[types.ID]map[string]interface{}
+	db       *sql.DB
+	listener *pq.Listener
 }
 
 func NewProductRepository() *productRepositoryMock {
-	productRepo := productRepositoryMock{make(map[types.ID]map[string]interface{})}
-	for i := 0; i < 20; i = i + 1 {
-		IDTable[i] = types.ID(uuid.NewV4().String())
-		productRepo.data[IDTable[i]] = map[string]interface{}{
-			"description": fmt.Sprintf("Mock Product #%d", i+1),
-		}
+	db, err := sql.Open("postgres", "user=postgres host=localhost sslmode=disable")
+	if err != nil {
+		panic(err)
+	}
+
+	productRepo := productRepositoryMock{
+		db: db,
+		listener: pq.NewListener("", 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		}),
 	}
 
 	return &productRepo
 }
 
 func (repo *productRepositoryMock) FindAll() model.ProductList {
-	productList := model.ProductList{}
+	rows, err := repo.db.Query("SELECT id, description, metadata FROM carthago.product")
+	if err != nil {
+		panic(err)
+	}
 
-	for id, detail := range repo.data {
-		product := model.NewProduct(id, detail["description"].(string))
-		productList = append(productList, product)
+	var (
+		productList model.ProductList
+		id          sql.NullString
+		description sql.NullString
+		metadata    sql.NullString
+	)
+
+	for {
+		ok := rows.Next()
+
+		if !ok {
+			break
+		}
+
+		rows.Scan(&id, &description, &metadata)
+		fmt.Println(id, description, metadata)
 	}
 
 	return productList
 }
 
 func (repo *productRepositoryMock) FindByID(id types.ID) (*model.Product, error) {
-	detail, err := repo.data[id]
-	if !err {
-		return nil, ErrProductNotFound
-	}
+	/*
+		detail, err := repo.data[id]
+		if !err {
+			return nil, ErrProductNotFound
+		}
+	*/
 
-	return model.NewProduct(id, detail["description"].(string)), nil
+	//return model.NewProduct(id, detail["description"].(string)), nil
+	return model.NewProduct(id, "hello world"), nil
 }

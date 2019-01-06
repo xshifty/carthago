@@ -13,4 +13,8 @@ ensure:
 clean:
 	@rm -rf ${BINARY_DIR}/${BINARY}
 
-.PHONY: clean ensure all
+update:
+	@git pull origin master
+
+.PHONY: clean update ensure all
+

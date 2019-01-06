@@ -1,0 +1,21 @@
+version: "3.1"
+services:
+  postgresql:
+    build:
+      context: "./docker/postgresql"
+    restart: unless-stopped
+    environment:
+      POSTGRESQL_USER: "carthago"
+      POSTGRESQL_PASSWORD: "q1w2e3r4"
+      PGDATA: "/opt/pgdata"
+    volumes:
+      - "./docker/postgresql/pgdata:/var/lib/postgresql/data/pgdata"
+    ports:
+      - "5432:5432"
+  
+  redis:
+    build:
+      context: "./docker/redis"
+    restart: unless-stopped
+    ports:
+      - "6379:6739"
