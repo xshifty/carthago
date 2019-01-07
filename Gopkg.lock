@@ -20,12 +20,21 @@
   revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
   version = "v1.2.0"
 
+[[projects]]
+  branch = "master"
+  digest = "1:9af194a35c5121980757ef037e3793f0f272f2cbbd4dd3a7cc74de4fae8cf9a0"
+  name = "github.com/xshifty/carthago-dic"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d930b0d1f99dd9dafc7ecc3fb2bec590956b6296"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
     "github.com/lib/pq",
     "github.com/satori/go.uuid",
+    "github.com/xshifty/carthago-dic",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

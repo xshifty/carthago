@@ -1,12 +1,16 @@
 package provider
 
-import "fmt"
+import (
+	"fmt"
+
+	dic "github.com/xshifty/carthago-dic"
+)
 
 type repositoryFactoryHandler struct {
-	container *Container
+	container *dic.Container
 }
 
-func NewRepositoryFactory(container *Container) *repositoryFactoryHandler {
+func NewRepositoryFactory(container *dic.Container) *repositoryFactoryHandler {
 	return &repositoryFactoryHandler{
 		container: container,
 	}

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/lib/pq"
+	dic "github.com/xshifty/carthago-dic"
 	mock "github.com/xshifty/carthago/mock"
 	model "github.com/xshifty/carthago/model"
 	provider "github.com/xshifty/carthago/provider"
@@ -18,7 +19,7 @@ var (
 	info = log.New(os.Stdout, "[ INFO ] ", log.LstdFlags)
 	warn = log.New(os.Stderr, "[ WARN ] ", log.LstdFlags)
 
-	container         = provider.NewContainer()
+	container         = dic.New()
 	repositoryFactory = provider.NewRepositoryFactory(container)
 )
 
@@ -30,7 +31,7 @@ type (
 )
 
 func main() {
-	container.Add("db:conn", func(container *provider.Container) interface{} {
+	container.Set("db:conn", func(container *dic.Container) interface{} {
 		conn, err := sql.Open("postgres", "user=postgres host=localhost sslmode=disable")
 		if err != nil {
 			panic(err)
@@ -38,7 +39,7 @@ func main() {
 		return conn
 	})
 
-	container.Add("db:listener", func(container *provider.Container) interface{} {
+	container.Set("db:listener", func(container *dic.Container) interface{} {
 		return pq.NewListener("", 10*time.Second, time.Minute, func(ev pq.ListenerEventType, err error) {
 			if err != nil {
 				fmt.Println(err.Error())
@@ -46,7 +47,7 @@ func main() {
 		})
 	})
 
-	container.Add("repository:Product", func(container *provider.Container) interface{} {
+	container.Set("repository:Product", func(container *dic.Container) interface{} {
 		conn, err := container.Get("db:conn")
 		if err != nil {
 			panic(err)
